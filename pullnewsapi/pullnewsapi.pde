@@ -6,9 +6,10 @@ import oscP5.*;
 OscP5 oscP5;
 
 // TTS Related
-TTS tts;
+StringList toSay;
 
 // News API: Pulling JSON
+String query;
 News news;
 HashMap<String, Word> words;
 
@@ -19,8 +20,8 @@ Capture cam;
 
 void setup() {
   // graphics
-  //fullScreen();
-  size(680, 680);
+  fullScreen();
+  //size(680, 680);
   background(255);
   fill(0);
   PFont font = createFont("PrestigeEliteStd-Bd", 20);
@@ -28,9 +29,9 @@ void setup() {
   textAlign(LEFT, CENTER);
 
   // set up News API
-  String query = "q=and&sortBy=popularity";
+  query = "q=and&sortBy=popularity";
   news = new News(query);
-  if (news.error()){
+  if (news.error()) {
     print("news error");
     exit();
   }
@@ -53,28 +54,38 @@ void setup() {
   }
 
   // Set up voice
-  tts = new TTS();
+  toSay = new StringList();
 }
 
 void draw() {
   // Get word to add
   Word word = news.getNextWord();
-  if (word != null) {
-    if (words.containsKey(word.getWord())) {
-      words.get(word.getWord()).increment(word.authorIsNull());
-    } else {
-      words.put(word.getWord(), word);
+  while (word == null) {
+    news = new News(query);
+    if (news.error()) {
+      print("news error");
+      exit();
     }
-    if (found && word.authorIsNull()) tts.speak(word.getWord());
+    word = news.getNextWord();
   }
-
+  if (words.containsKey(word.getWord())) {
+    words.get(word.getWord()).increment(word.authorIsNull());
+  } else {
+    words.put(word.getWord(), word);
+  }
+  
   // draw
   if (found) {
+    if (word.authorIsNull()) {
+      toSay.append(word.getWord());
+      thread("say");
+    }
     if (cam.available() == true) {
       cam.read();
     }
     image(cam, 0, 0, width, height);
   } else {
+    toSay.clear();
     background(255);
   }
   for (String i : words.keySet()) {
@@ -96,4 +107,10 @@ void draw() {
 public void found(int i) {
   // println("found: " + i); // 1 == found, 0 == not found
   found = i == 1;
+}
+
+public void say() {
+  if (!found || toSay.size() == 0) return;
+  TTS tts = new TTS();
+  tts.speak(toSay.remove(0));
 }
