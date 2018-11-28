@@ -3,6 +3,7 @@ class Word {
   float x,y;
   int count;
   int null_count;
+  boolean author_null;
   
   Word(String word, float x, float y, boolean author_null) {
     this.word = word;
@@ -10,6 +11,7 @@ class Word {
     this.y = y;
     this.count = author_null ? 0 : 1;
     this.null_count = author_null ? 1 : 0;
+    this.author_null = author_null;
   }
   
   void increment(boolean author_null) {
@@ -20,10 +22,15 @@ class Word {
     }
   }
   
+  boolean authorIsNull() {return author_null;}
+  
+  String getWord() {return this.word;}
   float getX() {return this.x;}
   float getY() {return this.y;}
   
   color getColor() {
     return color(map(count, 0, 20, 255, 0));
   }
+  
+  boolean anyAuthorNull() { return this.null_count > 0; }
 }
